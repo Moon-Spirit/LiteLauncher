@@ -1,8 +1,10 @@
 // Renderer Dispatch — select GL translation layer by MC version + device tier
 #include "renderer_dispatch.h"
+#include "surface_bridge.h"
 #include <dlfcn.h>
 #include <string.h>
 #include <stdlib.h>
+#include <GLES3/gl3.h>
 
 ll_render_mode_t ll_render_detect(const char* mc_version, int device_tier) {
     if (!mc_version) return LL_RENDER_LWJGL2_GL4ES;

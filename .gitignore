@@ -43,3 +43,4 @@ Thumbs.db
 # Build artifacts
 *.zip
 !ksu_module/*.zip
+build/
