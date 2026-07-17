@@ -1,0 +1,42 @@
+# Flutter
+.dart_tool/
+.packages
+build/
+*.iml
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+
+# Android
+android/.gradle/
+android/app/build/
+android/mc_runtime/build/
+android/local.properties
+android/*.keystore
+android/*.jks
+*.apk
+*.aab
+
+# Native
+android/native/build/
+*.o
+*.so
+*.dylib
+
+# LWJGL submodules
+lwjgl2/
+lwjgl3/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.zip
+!ksu_module/*.zip

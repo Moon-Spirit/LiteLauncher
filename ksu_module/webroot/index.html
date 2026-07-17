@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiteLauncher Helper</title>
+<link rel="stylesheet" href="/internal/insets.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'JetBrains Mono', 'Courier New', monospace; background: #0D1117; color: #c9d1d9; padding: 16px; }
+h1 { font-size: 20px; color: #00E5FF; margin-bottom: 16px; }
+h2 { font-size: 13px; color: #8b949e; text-transform: uppercase; letter-spacing: 2px; margin: 16px 0 8px; }
+.card { background: #161B22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; }
+.status-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #21262d; }
+.status-row:last-child { border-bottom: none; }
+.label { color: #8b949e; font-size: 13px; }
+.value { color: #c9d1d9; font-size: 13px; font-weight: 600; }
+.green { color: #3fb950; }
+.red { color: #f85149; }
+.yellow { color: #d29922; }
+input, select { background: #0D1117; color: #c9d1d9; border: 1px solid #30363d; border-radius: 6px; padding: 8px 12px; font-size: 13px; font-family: inherit; width: 100%; }
+input:focus { border-color: #00E5FF; outline: none; }
+.form-row { margin: 10px 0; }
+.form-row label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 4px; }
+button { background: linear-gradient(135deg, #00E5FF,#7C4DFF); color: #0D1117; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: 600; font-family: inherit; width: 100%; margin-top: 12px; cursor: pointer; }
+button:active { opacity: 0.8; }
+</style>
+</head>
+<body>
+<h1>⚡ LiteLauncher Helper</h1>
+
+<div class="card">
+  <h2>Status</h2>
+  <div class="status-row"><span class="label">PID File</span><span id="pid-file" class="value">—</span></div>
+  <div class="status-row"><span class="label">PID</span><span id="mc-pid" class="value">—</span></div>
+  <div class="status-row"><span class="label">OOM Score Adj</span><span id="mc-oom" class="value">—</span></div>
+  <div class="status-row"><span class="label">RSS</span><span id="mc-rss" class="value">—</span></div>
+  <div class="status-row"><span class="label">SoC</span><span id="mc-soc" class="value">—</span></div>
+</div>
+
+<div class="card">
+  <h2>Protection</h2>
+  <div class="form-row"><label>OOM Score Adj</label><input type="number" id="oom-adj" value="-1000"></div>
+  <div class="form-row"><label>Nice Value</label><input type="number" id="nice-val" value="-20"></div>
+  <div class="form-row"><label>CPU Mask (hex)</label><input type="text" id="cpu-mask" value="ff"></div>
+  <div class="form-row"><label>SCHED_FIFO Priority</label><input type="number" id="sched-prio" value="99" min="1" max="99"></div>
+  <button onclick="applySettings()">Apply & Save</button>
+</div>
+
+<div class="card">
+  <h2>Swap</h2>
+  <div id="swap-info"></div>
+</div>
+
+<script type="module">
+import { exec, toast } from 'kernelsu';
+
+async function refresh() {
+  const pidFile = await exec('cat /data/local/tmp/litelauncher.pid 2>/dev/null || echo "none"');
+  document.getElementById('pid-file').textContent = pidFile.stdout.trim();
+  
+  const pid = pidFile.stdout.trim();
+  if (pid && pid !== 'none') {
+    document.getElementById('mc-pid').textContent = pid;
+    try {
+      const oom = await exec(`cat /proc/${pid}/oom_score_adj 2>/dev/null || echo "?"`);
+      document.getElementById('mc-oom').textContent = oom.stdout.trim();
+      const rss = await exec(`grep VmRSS /proc/${pid}/status 2>/dev/null | awk "{print $2}"`);
+      document.getElementById('mc-rss').textContent = `${(parseInt(rss.stdout.trim()) / 1024).toFixed(0)} MB`;
+    } catch(e) {}
+  }
+
+  const swaps = await exec('cat /proc/swaps 2>/dev/null');
+  document.getElementById('swap-info').innerHTML = 
+    `<div class="status-row"><span class="label">/proc/swaps</span></div>` +
+    swaps.stdout.trim().split('\n').slice(1).map(l => 
+      `<div class="status-row"><span class="label">${l.split(/\s+/)[0]}</span><span class="value">${l.split(/\s+/)[2]} KB</span></div>`
+    ).join('');
+}
+
+async function loadSaved() {
+  const keys = ['oom_score_adj','nice_val','cpu_mask','sched_priority'];
+  for (const k of keys) {
+    const r = await exec(`ksud module config get ${k}`);
+    if (r.stdout.trim()) document.getElementById(k.replace(/_/g,'-')).value = r.stdout.trim();
+  }
+}
+
+window.applySettings = async function() {
+  await exec(`ksud module config set oom_score_adj "${document.getElementById('oom-adj').value}"`);
+  await exec(`ksud module config set nice_val "${document.getElementById('nice-val').value}"`);
+  await exec(`ksud module config set cpu_mask "${document.getElementById('cpu-mask').value}"`);
+  await exec(`ksud module config set sched_priority "${document.getElementById('sched-prio').value}"`);
+  toast('Saved! Restart to apply protection to new processes.');
+};
+
+await loadSaved();
+await refresh();
+setInterval(refresh, 6000);
+</script>
+</body>
+</html>

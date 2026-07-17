@@ -1,0 +1,6 @@
+id=litelauncher_helper
+name=LiteLauncher Helper
+version=v1.0.0
+versionCode=100
+author=sanjiu2024
+description=Kernel-level protection for MC Runtime process. OOM adj -1000, CPU governor performance, big core pinning, GPU max frequency, IO scheduler tuning, zRAM extension. Qualcomm + MediaTek support. Scene8G swap detection and graceful degradation.

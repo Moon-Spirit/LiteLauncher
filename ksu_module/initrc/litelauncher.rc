@@ -1,0 +1,9 @@
+service litelauncher_helper /data/adb/modules/litelauncher_helper/service.sh
+    user root
+    group root
+    seclabel u:r:ksu:s0
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1
+    start litelauncher_helper
