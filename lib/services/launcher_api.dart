@@ -1,17 +1,15 @@
-// Pigeon API 定义 — LiteLauncher Flutter ↔ Kotlin 通信契约
-// 运行: dart run pigeon --input lib/services/launcher_api.dart
+// Pigeon API definition
+// Run: dart run pigeon --input lib/services/launcher_api.dart
 
 import 'package:pigeon/pigeon.dart';
 
 @ConfigurePigeon(PigeonOptions(
   dartOut: 'lib/services/launcher_api.g.dart',
   kotlinOut: 'android/app/src/main/java/com/litelauncher/app/bridge/LauncherApi.kt',
-  kotlinPackageName: 'com.litelauncher.app.bridge',
 ))
 
-// ===== 版本管理 =====
-
 class VersionInfo {
+  VersionInfo({required this.id, required this.type, required this.url, required this.releaseTime, required this.installed, this.loaderName});
   final String id;
   final String type;
   final String url;
@@ -21,6 +19,7 @@ class VersionInfo {
 }
 
 class VersionDetail {
+  VersionDetail({required this.id, required this.type, required this.mainClass, required this.assetsIndex, required this.javaVersion, required this.releaseTime, required this.size});
   final String id;
   final String type;
   final String mainClass;
@@ -30,11 +29,10 @@ class VersionDetail {
   final int size;
 }
 
-// ===== 账户 =====
-
 enum AccountType { microsoft, offline, yggdrasil }
 
 class AccountInfo {
+  AccountInfo({required this.id, required this.username, required this.uuid, required this.type, this.skinUrl, this.authServer});
   final String id;
   final String username;
   final String uuid;
@@ -44,59 +42,57 @@ class AccountInfo {
 }
 
 class AuthProgress {
+  AuthProgress({required this.userCode, required this.verificationUri, required this.status, this.error});
   final String userCode;
   final String verificationUri;
-  final String status; // waiting, success, error
+  final String status;
   final String? error;
 }
 
-// ===== 游戏 =====
-
 class GameConfig {
+  GameConfig({required this.versionId, required this.gameDir, required this.javaHome, required this.maxRamMb, required this.renderMode, required this.loaderType, required this.extraJvmArgs});
   final String versionId;
   final String gameDir;
   final String javaHome;
   final int maxRamMb;
-  final int renderMode; // 1=GL4ES, 2=MobileGlues, 3=Zink
-  final String loaderType; // vanilla, fabric, forge, neoforge, quilt, optifine
+  final int renderMode;
+  final String loaderType;
   final List<String> extraJvmArgs;
 }
 
 class GameStatus {
-  final int state; // 0=idle, 1=loading, 3=ready, 4=running, 5=crashed, 6=stopped
+  GameStatus({required this.state, required this.fps, required this.usedRamMb, this.crashReport});
+  final int state;
   final int fps;
   final int usedRamMb;
   final String? crashReport;
 }
 
-// ===== 下载 =====
-
 class DownloadProgress {
+  DownloadProgress({required this.taskId, required this.name, required this.progress, required this.downloadedBytes, required this.totalBytes, required this.speedBytesPerSec, required this.status});
   final String taskId;
   final String name;
-  final double progress; // 0.0-1.0
+  final double progress;
   final int downloadedBytes;
   final int totalBytes;
   final int speedBytesPerSec;
-  final String status; // downloading, paused, completed, error
+  final String status;
 }
 
-// ===== 设备信息 =====
-
 class DeviceInfo {
+  DeviceInfo({required this.totalRamMb, required this.availableRamMb, required this.cpuModel, required this.coreCount, required this.gpuRenderer, required this.deviceTier, required this.isRooted, required this.hasKsuModule});
   final int totalRamMb;
   final int availableRamMb;
   final String cpuModel;
   final int coreCount;
   final String gpuRenderer;
-  final int deviceTier; // 0=低, 1=中, 2=高
+  final int deviceTier;
   final bool isRooted;
   final bool hasKsuModule;
 }
 
-// ===== Mod =====
-
 class ModInfo {
+  ModInfo({required this.fileName, required this.name, required this.version, required this.loaderType, required this.enabled, required this.size});
   final String fileName;
   final String name;
   final String version;
@@ -106,6 +102,7 @@ class ModInfo {
 }
 
 class ModrinthProject {
+  ModrinthProject({required this.id, required this.slug, required this.title, required this.description, required this.iconUrl, required this.downloads, required this.categories});
   final String id;
   final String slug;
   final String title;
@@ -115,35 +112,22 @@ class ModrinthProject {
   final List<String> categories;
 }
 
-// ===== API 接口 =====
-
 @HostApi()
 abstract class LauncherHostApi {
-  // 版本
   @async List<VersionInfo> getVersionList();
   @async VersionDetail getVersionDetail(String versionId);
   @async void installVersion(String versionId);
-
-  // 账户
   @async AuthProgress startMicrosoftLogin();
   @async AccountInfo loginOffline(String username);
   @async void logout();
   @async AccountInfo getCurrentAccount();
   @async List<AccountInfo> getAccounts();
-
-  // 游戏
   @async GameStatus startGame(GameConfig config);
   @async void stopGame();
   @async GameStatus getGameStatus();
   @async void injectTouchEvent(double x, double y, int action, int pointerId);
-
-  // 下载
   @async void cancelDownload(String taskId);
-
-  // 设备
   @async DeviceInfo getDeviceInfo();
-
-  // Mod
   @async List<ModInfo> getInstalledMods(String gameDir, String loaderType);
   @async List<ModrinthProject> searchModrinth(String query, String mcVersion, String loaderType);
   @async void installModrinthMod(String projectId, String versionId, String gameDir);
@@ -151,7 +135,6 @@ abstract class LauncherHostApi {
   @async void installModLoader(String versionId, String loaderType, String loaderVersion);
 }
 
-// Flutter → Kotlin 的流式回调
 @FlutterApi()
 abstract class LauncherFlutterApi {
   void onDownloadProgress(DownloadProgress progress);
