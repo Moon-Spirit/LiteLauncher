@@ -1,0 +1,3 @@
+[submodule "lwjgl3"]
+	path = lwjgl3
+	url = https://github.com/PojavLauncherTeam/lwjgl3.git

@@ -23,9 +23,7 @@ android/native/build/
 *.so
 *.dylib
 
-# LWJGL submodules
-lwjgl2/
-lwjgl3/
+# LWJGL submodules (tracked via git submodule)
 
 # IDE
 .idea/
